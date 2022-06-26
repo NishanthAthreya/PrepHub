@@ -1,10 +1,6 @@
 package com.example.prephub
 
 import android.os.Bundle
-import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.prephub.ui.theme.PrepHubTheme
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction

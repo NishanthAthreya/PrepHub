@@ -14,6 +14,7 @@ import com.example.prephub.data.QuizzesDatabase
 import com.example.prephub.data.QuizzesRepo
 import com.example.prephub.navigation.NavCoordinator
 import com.example.prephub.screens.BaseFragment
+import com.example.prephub.screens.main.QUIZ_SELECTED
 import com.example.prephub.ui.theme.PrepHubTheme
 
 /**
@@ -35,16 +36,17 @@ class QuizDetailsFragment: BaseFragment() {
 @Composable
 private fun Fragment.QuizDetailsScreen(context: Context) = PrepHubTheme {
     val scaffoldState = rememberScaffoldState()
-    var inputTextState by remember { mutableStateOf("") }
-    val viewModel = QuizDetailsViewModel(QuizzesRepo(QuizzesDatabase.getDatabase(context = context).quizzesDao()))
-    val questionsAndAnswers = mutableMapOf<String, String>()
+    val viewModel = QuizDetailsViewModel(
+        QuizzesRepo(QuizzesDatabase.getDatabase(context = context).quizzesDao()),
+        arguments?.getString(QUIZ_SELECTED)
+    )
 
     Scaffold(
         scaffoldState = scaffoldState,
         topBar = {
             TopAppBar(
                 title = {
-                    Text(viewModel.quiz().value.firstOrNull()?.name.orEmpty())
+                    Text(viewModel.quiz().value?.name.orEmpty())
                 },
                 navigationIcon = {
                     IconButton(onClick = {
@@ -61,19 +63,9 @@ private fun Fragment.QuizDetailsScreen(context: Context) = PrepHubTheme {
         },
         content = {
             Column {
-                viewModel.quiz().value.firstOrNull()?.questionsAndAnswers.orEmpty().forEach{
-                    Text("Question: ${it.key}/nAnswer: ${it.value}")
+                viewModel.quiz().value?.questionsAndAnswers.orEmpty().forEach {
+                    Text("Question: ${it.key}\nAnswer: ${it.value}")
                 }
-            }
-        },
-        floatingActionButton = {
-            Button(onClick = {
-
-            }){
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_add),
-                    contentDescription = "add"
-                )
             }
         }
     )

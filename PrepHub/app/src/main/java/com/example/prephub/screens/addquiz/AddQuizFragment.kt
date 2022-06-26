@@ -47,9 +47,10 @@ class AddQuizFragment : BaseFragment() {
 @Composable
 private fun Fragment.AddQuizScreen(context: Context) = PrepHubTheme {
     val scaffoldState = rememberScaffoldState()
-    var inputTextState by remember { mutableStateOf("") }
+    var quizTextState by remember { mutableStateOf("") }
+    var folderTextState by remember { mutableStateOf("") }
     val viewModel = AddQuizViewModel(QuizzesRepo(QuizzesDatabase.getDatabase(context = context).quizzesDao()))
-    val questionsAndAnswers = mutableMapOf<String, String>()
+    val questionsAndAnswersStates = mutableMapOf<State<String>, State<String>>()
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -77,11 +78,24 @@ private fun Fragment.AddQuizScreen(context: Context) = PrepHubTheme {
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(color = Color.Transparent),
-                    value = inputTextState,
+                    value = quizTextState,
                     onValueChange = {
-                        inputTextState = it
+                        quizTextState = it
                     },
                     label = { Text("Enter quiz title") },
+                    colors = TextFieldDefaults.textFieldColors(
+                        backgroundColor = Color.Transparent
+                    )
+                )
+                TextField(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(color = Color.Transparent),
+                    value = folderTextState,
+                    onValueChange = {
+                        folderTextState = it
+                    },
+                    label = { Text("Enter folder name") },
                     colors = TextFieldDefaults.textFieldColors(
                         backgroundColor = Color.Transparent
                     )
@@ -91,78 +105,80 @@ private fun Fragment.AddQuizScreen(context: Context) = PrepHubTheme {
                 var selectedOptionText by remember { mutableStateOf(options[0]) }
                 var numQuestionsTextFieldSize by remember { mutableStateOf(Size.Zero)}
 
-                    OutlinedTextField(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .onGloballyPositioned { coordinates ->
-                                //This value is used to assign to the DropDown the same width
-                                numQuestionsTextFieldSize = coordinates.size.toSize()
-                            },
-                        value = selectedOptionText,
-                        onValueChange = { selectedOptionText = it },
-                        label = { Text("Number of questions") },
-                        trailingIcon = {
-                            IconButton(onClick = {expanded = true}) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_drop_down),
-                                    contentDescription = "dropdown"
-                                )
-                            }
-                        }
-                    )
-                    DropdownMenu(
-                        modifier = Modifier
-                            .width(with(LocalDensity.current){numQuestionsTextFieldSize.width.toDp()}),
-                        expanded = expanded,
-                        onDismissRequest = {
-                            expanded = false
-                        }
-                    ) {
-                        options.forEach { selectionOption ->
-                            DropdownMenuItem(
-                                onClick = {
-                                    selectedOptionText = selectionOption
-                                    expanded = false
-                                }
-                            ) {
-                                Text(text = selectionOption)
-                            }
+                OutlinedTextField(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onGloballyPositioned { coordinates ->
+                            //This value is used to assign to the DropDown the same width
+                            numQuestionsTextFieldSize = coordinates.size.toSize()
+                    },
+                    value = selectedOptionText,
+                    onValueChange = { selectedOptionText = it },
+                    label = { Text("Number of questions") },
+                    trailingIcon = {
+                        IconButton(onClick = {expanded = true}) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_drop_down),
+                                contentDescription = "dropdown"
+                            )
                         }
                     }
-                if(selectedOptionText.isDigitsOnly() && selectedOptionText.isNotEmpty()) {
+                )
+                DropdownMenu(
+                    modifier = Modifier
+                        .width(with(LocalDensity.current){numQuestionsTextFieldSize.width.toDp()}),
+                    expanded = expanded,
+                    onDismissRequest = {
+                        expanded = false
+                    }
+                ) {
+                    options.forEach { selectionOption ->
+                        DropdownMenuItem(
+                            onClick = {
+                                selectedOptionText = selectionOption
+                                expanded = false
+                            }
+                        ) {
+                            Text(text = selectionOption)
+                        }
+                    }
+                }
+                if (selectedOptionText.isDigitsOnly() && selectedOptionText.isNotEmpty()) {
                     LazyColumn {
-                        questionsAndAnswers.clear()
-                        items(selectedOptionText.toInt()) {
-                            var question by remember { mutableStateOf("") }
-                            TextField(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(color = Color.Transparent),
-                                value = question,
-                                onValueChange = {
-                                    question = it
-                                },
-                                label = { Text("Enter question ${it + 1}") },
-                                colors = TextFieldDefaults.textFieldColors(
-                                    backgroundColor = Color.Transparent
+                        questionsAndAnswersStates.clear()
+                        if (selectedOptionText.isNotEmpty()) {
+                            items(selectedOptionText.toInt()) {
+                                val question = remember { mutableStateOf("") }
+                                TextField(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(color = Color.Transparent),
+                                    value = question.value,
+                                    onValueChange = {
+                                        question.value = it
+                                    },
+                                    label = { Text("Enter question ${it + 1}") },
+                                    colors = TextFieldDefaults.textFieldColors(
+                                        backgroundColor = Color.Transparent
+                                    )
                                 )
-                            )
-                            var answer by remember { mutableStateOf("") }
-                            TextField(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(color = Color.Transparent)
-                                    .padding(bottom = 24.dp),
-                                value = answer,
-                                onValueChange = {
-                                    answer = it
-                                },
-                                label = { Text("Enter answer ${it + 1}") },
-                                colors = TextFieldDefaults.textFieldColors(
-                                    backgroundColor = Color.Transparent
+                                val answer = remember { mutableStateOf("") }
+                                TextField(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(color = Color.Transparent)
+                                        .padding(bottom = 24.dp),
+                                    value = answer.value,
+                                    onValueChange = {
+                                        answer.value = it
+                                    },
+                                    label = { Text("Enter answer ${it + 1}") },
+                                    colors = TextFieldDefaults.textFieldColors(
+                                        backgroundColor = Color.Transparent
+                                    )
                                 )
-                            )
-                            questionsAndAnswers[question] = answer
+                                questionsAndAnswersStates[question] = answer
+                            }
                         }
                     }
                 }
@@ -170,13 +186,18 @@ private fun Fragment.AddQuizScreen(context: Context) = PrepHubTheme {
         },
         floatingActionButton = {
             Button(onClick = {
+                val questionsAndAnswers = mutableMapOf<String, String>()
+                questionsAndAnswersStates.forEach { (question, answer) ->
+                    questionsAndAnswers[question.value] = answer.value
+                }
                 viewModel.addQuiz(
-                    Quiz(
-                        name = inputTextState,
-                        "TestFolder",
+                    quiz = Quiz(
+                        name = quizTextState,
+                        folder = folderTextState,
                         questionsAndAnswers = questionsAndAnswers
                     )
                 )
+                NavCoordinator().goBack(this)
             }){
                 Icon(
                     painter = painterResource(id = R.drawable.ic_add),

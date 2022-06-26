@@ -25,7 +25,7 @@ class NavCoordinator {
             R.id.fragmentContainer,
             fragment2
         )
-        transaction.addToBackStack("fragment2")
+        transaction.addToBackStack("addQuiz")
         transaction.commit()
     }
 

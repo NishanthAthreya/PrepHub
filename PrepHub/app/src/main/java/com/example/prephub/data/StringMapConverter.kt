@@ -4,11 +4,10 @@ import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
-object StringMapConverter {
+class StringMapConverter {
 
     @TypeConverter
-    @JvmStatic
-    fun fromString(value: String): @JvmSuppressWildcards Map<@JvmSuppressWildcards String,@JvmSuppressWildcards String> {
+    fun fromString(value: String): Map<String, String> {
         val mapType = object: TypeToken<@JvmSuppressWildcards Map<String, String>>(){}.type
 
         return Gson().fromJson(
@@ -18,8 +17,7 @@ object StringMapConverter {
     }
 
     @TypeConverter
-    @JvmStatic
-    fun toString(value: @JvmSuppressWildcards Map<@JvmSuppressWildcards String,@JvmSuppressWildcards String>): String {
+    fun toString(value: Map<String, String>): String {
         return Gson().toJson(value)
     }
 }

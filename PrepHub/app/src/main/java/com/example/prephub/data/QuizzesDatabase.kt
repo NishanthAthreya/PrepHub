@@ -12,7 +12,7 @@ import com.example.prephub.data.entity.Quiz
  * Quizzes database.
  */
 @Database(entities = [Quiz::class], version = 1, exportSchema = false)
-@TypeConverters(StringToMapConverter::class)
+@TypeConverters(StringMapConverter::class)
 abstract class QuizzesDatabase : RoomDatabase() {
 
     abstract fun quizzesDao(): QuizzesDao

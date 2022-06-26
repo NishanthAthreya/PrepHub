@@ -6,10 +6,8 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -18,6 +16,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import com.example.prephub.screens.BaseFragment
@@ -27,6 +27,8 @@ import com.example.prephub.data.QuizzesDatabase
 import com.example.prephub.data.QuizzesRepo
 import com.example.prephub.navigation.NavCoordinator
 import kotlinx.coroutines.launch
+
+const val QUIZ_SELECTED = "quizSelected"
 
 /**
  * Main fragment, which represents initial screen.
@@ -51,6 +53,7 @@ private fun Fragment.MainScreen(context: Context) = PrepHubTheme {
     val focusRequester = remember { FocusRequester() }
     val scope = rememberCoroutineScope()
     val viewModel = MainViewModel(QuizzesRepo(QuizzesDatabase.getDatabase(context = context).quizzesDao()))
+    val selectedFolder: MutableState<String?> = remember{ mutableStateOf(null) }
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -130,13 +133,28 @@ private fun Fragment.MainScreen(context: Context) = PrepHubTheme {
                 }
             }
             Text(
-                modifier = Modifier.padding(24 .dp),
+                modifier = Modifier.padding(24 .dp).clickable {
+                    selectedFolder.value = null
+                    scope.launch {
+                        scaffoldState.drawerState.run {
+                            close()
+                        }
+                    }
+                },
                 text = "All"
             )
-            viewModel.quizzes().value.forEach{
+            viewModel.quizzes().value.map { it.folder }.distinct().forEach {
                 Text(
-                    modifier = Modifier.padding(24 .dp),
-                    text = it.folder
+                    modifier = Modifier.padding(24 .dp).clickable {
+                        selectedFolder.value = it
+                        scope.launch {
+                            scaffoldState.drawerState.run {
+                                close()
+                            }
+                        }
+                    },
+                    text = it,
+                    style = TextStyle.Default.apply { copy(fontWeight = if(selectedFolder.value == it) FontWeight.Bold else FontWeight.Normal) }
                 )
             }
         },
@@ -154,21 +172,40 @@ private fun Fragment.MainScreen(context: Context) = PrepHubTheme {
             }
         },
         content = {
-            viewModel.quizzes().value.forEach {
-                Card(modifier = Modifier.fillMaxWidth()
-                    .padding(24 .dp),
-                    elevation = 4.dp
-                ) {
-                    Text(
-                        modifier = Modifier.padding(8 .dp)
-                            .clickable {
-                                NavCoordinator().navigateToQuizDetailsFragment(
-                                    this,
-                                    Bundle()
+            val screen = this
+            viewModel.quizzes().value.let {
+                LazyColumn {
+                    (if (selectedFolder.value != null) it.filter { quiz ->
+                        quiz.folder == selectedFolder.value
+                    } else it).forEach {
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth()
+                                    .padding(
+                                        top = 24.dp,
+                                        start = 24.dp,
+                                        end = 24.dp
+                                    )
+                                    .clickable {
+                                        NavCoordinator().navigateToQuizDetailsFragment(
+                                            screen,
+                                            Bundle().also { bundle ->
+                                                bundle.putString(
+                                                    QUIZ_SELECTED,
+                                                    it.name
+                                                )
+                                            }
+                                        )
+                                    },
+                                elevation = 4.dp
+                            ) {
+                                Text(
+                                    modifier = Modifier.padding(8.dp),
+                                    text = it.name
                                 )
-                            },
-                        text = it.name
-                    )
+                            }
+                        }
+                    }
                 }
             }
         }
